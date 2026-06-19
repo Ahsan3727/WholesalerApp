@@ -1,6 +1,10 @@
+// screens/ChatScreen.js – FIXED
 import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Colors } from '../theme/theme';
+
+const { width } = Dimensions.get('window');
+const BUBBLE_MAX_WIDTH = width * 0.8; // 80% of screen width as a number
 
 export default function ChatScreen({ route }) {
   const { role } = route.params || {};
@@ -35,13 +39,33 @@ export default function ChatScreen({ route }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { flex:1, backgroundColor:Colors.background, padding:8 },
-  bubble: { padding:10, borderRadius:10, marginVertical:4, maxWidth:'80%' },
-  me: { alignSelf:'flex-end', backgroundColor:'#DCF8C6' },
-  other: { alignSelf:'flex-start', backgroundColor:Colors.white },
-  inputRow: { flexDirection:'row', alignItems:'center', marginTop:8 },
-  input: { flex:1, backgroundColor:Colors.white, borderRadius:20, paddingHorizontal:12, paddingVertical:8, borderWidth:1, borderColor:Colors.lightGray },
-  sendBtn: { backgroundColor:Colors.primary, borderRadius:20, paddingHorizontal:16, paddingVertical:8, marginLeft:8 },
-  sendText: { color:Colors.white, fontWeight:'bold' }
+  container: { flex: 1, backgroundColor: Colors.background, padding: 8 },
+  bubble: { 
+    padding: 10, 
+    borderRadius: 10, 
+    marginVertical: 4, 
+    maxWidth: BUBBLE_MAX_WIDTH,  // ← now a number
+  },
+  me: { alignSelf: 'flex-end', backgroundColor: '#DCF8C6' },
+  other: { alignSelf: 'flex-start', backgroundColor: Colors.white },
+  inputRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  input: { 
+    flex: 1, 
+    backgroundColor: Colors.white, 
+    borderRadius: 20, 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    borderWidth: 1, 
+    borderColor: Colors.lightGray 
+  },
+  sendBtn: { 
+    backgroundColor: Colors.primary, 
+    borderRadius: 20, 
+    paddingHorizontal: 16, 
+    paddingVertical: 8, 
+    marginLeft: 8 
+  },
+  sendText: { color: Colors.white, fontWeight: 'bold' },
 });

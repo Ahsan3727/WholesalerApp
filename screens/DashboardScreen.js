@@ -1,3 +1,4 @@
+// screens/DashboardScreen.js – FIXED
 import React from 'react';
 import {
   View,
@@ -6,14 +7,19 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import useLocationTracking from '../hooks/useLocationTracking';
 
+const { width } = Dimensions.get('window');
+const menuWidth = (width - 48) / 2;  // 48 = total horizontal padding + gap
+
 const DashboardScreen = ({ navigation }) => {
   const { wholesaler } = useAuth();
-useLocationTracking(true);
+  useLocationTracking(true);
+
   const handleLogout = async () => {
     await AsyncStorage.clear();
     if (typeof window !== 'undefined') {
@@ -77,7 +83,7 @@ useLocationTracking(true);
       <Text style={styles.sectionTitle}>Business Actions</Text>
       <View style={styles.menuGrid}>
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('Products')}
         >
           <Text style={styles.menuIcon}>📦</Text>
@@ -86,7 +92,7 @@ useLocationTracking(true);
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('AddProduct')}
         >
           <Text style={styles.menuIcon}>➕</Text>
@@ -95,20 +101,25 @@ useLocationTracking(true);
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('Orders')}
         >
           <Text style={styles.menuIcon}>📋</Text>
           <Text style={styles.menuText}>Orders</Text>
           <Text style={styles.menuSubtext}>View orders</Text>
         </TouchableOpacity>
-<TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Map')}>
-  <Text style={styles.menuIcon}>🗺️</Text>
-  <Text style={styles.menuText}>My Map</Text>
-  <Text style={styles.menuSubtext}>View location</Text>
-</TouchableOpacity>
+
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
+          onPress={() => navigation.navigate('Map')}
+        >
+          <Text style={styles.menuIcon}>🗺️</Text>
+          <Text style={styles.menuText}>My Map</Text>
+          <Text style={styles.menuSubtext}>View location</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('Earnings')}
         >
           <Text style={styles.menuIcon}>💰</Text>
@@ -117,7 +128,7 @@ useLocationTracking(true);
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('Profile')}
         >
           <Text style={styles.menuIcon}>👤</Text>
@@ -126,7 +137,7 @@ useLocationTracking(true);
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.menuItem}
+          style={[styles.menuItem, { width: menuWidth }]}
           onPress={() => navigation.navigate('Settings')}
         >
           <Text style={styles.menuIcon}>⚙️</Text>
@@ -259,11 +270,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 12,
+    justifyContent: 'space-between',
   },
   menuItem: {
-    width: '46%',
     backgroundColor: '#fff',
-    margin: '2%',
+    marginBottom: 12,
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
