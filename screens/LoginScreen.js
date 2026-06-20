@@ -1,19 +1,13 @@
-// screens/LoginScreen.js – FIXED
+// screens/LoginScreen.js
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
-  Dimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../context/AuthContext';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 const LoginScreen = ({ navigation }) => {
   const { login } = useAuth();
-  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -48,99 +42,97 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <StatusBar style="light" />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <View style={styles.headerGradient}>
-              <Text style={styles.appName}>🏭 Groxo</Text>
-              <Text style={styles.subtitle}>Wholesaler Login</Text>
-            </View>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header with gradient effect */}
+        <View style={styles.header}>
+          <View style={styles.headerGradient}>
+            <Text style={styles.appName}>🏭 Groxo</Text>
+            <Text style={styles.subtitle}>Wholesaler Login</Text>
+          </View>
+        </View>
+
+        {/* Form Card */}
+        <View style={styles.form}>
+          {/* Toggle Buttons */}
+          <View style={styles.toggleContainer}>
+            <TouchableOpacity
+              style={[styles.toggleButton, loginMethod === 'email' && styles.toggleActive]}
+              onPress={() => setLoginMethod('email')}>
+              <Text style={[styles.toggleText, loginMethod === 'email' && styles.toggleTextActive]}>Email</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, loginMethod === 'phone' && styles.toggleActive]}
+              onPress={() => setLoginMethod('phone')}>
+              <Text style={[styles.toggleText, loginMethod === 'phone' && styles.toggleTextActive]}>Phone</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggleButton, loginMethod === 'email' && styles.toggleActive]}
-                onPress={() => setLoginMethod('email')}>
-                <Text style={[styles.toggleText, loginMethod === 'email' && styles.toggleTextActive]}>Email</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggleButton, loginMethod === 'phone' && styles.toggleActive]}
-                onPress={() => setLoginMethod('phone')}>
-                <Text style={[styles.toggleText, loginMethod === 'phone' && styles.toggleTextActive]}>Phone</Text>
-              </TouchableOpacity>
-            </View>
-
-            {loginMethod === 'email' && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email Address</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="wholesaler@example.com"
-                  placeholderTextColor="#aaa"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            )}
-
-            {loginMethod === 'phone' && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Phone Number</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="+1 234 567 890"
-                  placeholderTextColor="#aaa"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                />
-              </View>
-            )}
-
+          {/* Dynamic Inputs */}
+          {loginMethod === 'email' && (
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>Email Address</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your password"
+                placeholder="wholesaler@example.com"
                 placeholderTextColor="#aaa"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
               />
             </View>
+          )}
 
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                <Text style={styles.link}>Sign Up</Text>
-              </TouchableOpacity>
+          {loginMethod === 'phone' && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="+1 234 567 890"
+                placeholderTextColor="#aaa"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+              />
             </View>
+          )}
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor="#aaa"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+            />
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}>
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+              <Text style={styles.link}>Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fc',
-  },
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fc',
   },
   scrollContent: {
     flexGrow: 1,
@@ -153,11 +145,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerGradient: {
-    backgroundColor: '#FF6B00',
+    backgroundColor: '#FF6B00', // primary orange
     paddingVertical: 30,
     paddingHorizontal: 40,
     borderRadius: 20,
-    width: screenWidth - 48,      // ← now a number, not a string
+    width: '100%',
     alignItems: 'center',
     shadowColor: '#FF6B00',
     shadowOffset: { width: 0, height: 6 },

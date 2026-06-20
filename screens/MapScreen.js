@@ -1,4 +1,3 @@
-// screens/MapScreen.js – FIXED
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -24,7 +23,7 @@ import 'leaflet/dist/leaflet.css';
 const DEFAULT_LOCATION = { latitude: 31.72, longitude: 72.98 };
 
 export default function MapScreen({ navigation }) {
-  const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION);
+  const [currentLocation, setCurrentLocation] = useState(DEFAULT_LOCATION); // start with Chiniot
   const [locationReady, setLocationReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const mapRef = useRef(null);
@@ -182,7 +181,7 @@ export default function MapScreen({ navigation }) {
         </NativeMapView>
       )}
 
-      {/* ---------- Loading indicator overlay ---------- */}
+      {/* ---------- Loading indicator overlay (subtle, over the map) ---------- */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#FF9800" />
@@ -190,7 +189,7 @@ export default function MapScreen({ navigation }) {
         </View>
       )}
 
-      {/* ---------- Header ---------- */}
+      {/* ---------- Header (always on top) ---------- */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -267,7 +266,7 @@ function WebMapInstance({ location, onMapReady, icon }) {
 }
 
 // ==============================
-// FIXED STYLES – Android‑safe shadow props
+// STYLES (web‑compatible boxShadow)
 // ==============================
 const styles = StyleSheet.create({
   container: { flex: 1 },
@@ -279,6 +278,7 @@ const styles = StyleSheet.create({
     padding: 30,
     backgroundColor: '#fff',
   },
+  // Loading overlay – sits on top of the already visible map
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255,255,255,0.7)',
@@ -302,8 +302,7 @@ const styles = StyleSheet.create({
   },
   permissionBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   backLink: { color: '#FF9800', fontWeight: '600', fontSize: 16, marginTop: 10 },
-
-  // ---------- HEADER (Android shadow props) ----------
+  // Header – uses boxShadow for web
   header: {
     position: 'absolute',
     top: 50,
@@ -316,11 +315,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    // Android shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    // New web‑compatible shadow (replaces shadowColor/Offset/Radius)
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
     elevation: 10,
   },
   backButton: {
@@ -331,20 +327,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    // Android shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    boxShadow: '0 1px 4px rgba(0,0,0,0.1)',
   },
   backIcon: { fontSize: 28, color: '#FF9800', fontWeight: '300', lineHeight: 30 },
   title: { fontSize: 18, fontWeight: '600', color: '#1a1a1a', flex: 1 },
   headerSpacer: { width: 44 },
   markerBox: { alignItems: 'center', justifyContent: 'center', width: 40, height: 40 },
   markerIcon: { fontSize: 28 },
-
-  // ---------- CENTER BUTTON ----------
+  // Center button
   centerBtn: {
     position: 'absolute',
     bottom: 30,
@@ -356,11 +346,7 @@ const styles = StyleSheet.create({
     height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    // Android shadow
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
     elevation: 5,
   },
   centerBtnIcon: { fontSize: 24 },

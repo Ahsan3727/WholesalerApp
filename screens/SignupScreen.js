@@ -1,19 +1,13 @@
-// screens/SignupScreen.js – FIXED
+// screens/SignupScreen.js
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
-  Dimensions,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
 import { useAuth } from '../context/AuthContext';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 const SignupScreen = ({ navigation }) => {
   const { signup } = useAuth();
-  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -60,148 +54,147 @@ const SignupScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <StatusBar style="light" />
-      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <View style={styles.headerGradient}>
-              <Text style={styles.appName}>🏭 Join Groxo</Text>
-              <Text style={styles.subtitle}>Wholesaler Signup</Text>
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerGradient}>
+            <Text style={styles.appName}>🏭 Join Groxo</Text>
+            <Text style={styles.subtitle}>Wholesaler Signup</Text>
+          </View>
+        </View>
+
+        {/* Form Card */}
+        <View style={styles.form}>
+          {/* Step Indicator */}
+          <View style={styles.stepIndicator}>
+            <View style={[styles.stepCircle, step >= 1 && styles.stepActive]}>
+              <Text style={[styles.stepNumber, step >= 1 && styles.stepNumberActive]}>1</Text>
+            </View>
+            <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
+            <View style={[styles.stepCircle, step >= 2 && styles.stepActive]}>
+              <Text style={[styles.stepNumber, step >= 2 && styles.stepNumberActive]}>2</Text>
             </View>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.stepIndicator}>
-              <View style={[styles.stepCircle, step >= 1 && styles.stepActive]}>
-                <Text style={[styles.stepNumber, step >= 1 && styles.stepNumberActive]}>1</Text>
+          {/* Step 1 – Personal Info */}
+          {step === 1 && (
+            <>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Full Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="John Doe"
+                  placeholderTextColor="#aaa"
+                  value={name}
+                  onChangeText={setName}
+                />
               </View>
-              <View style={[styles.stepLine, step >= 2 && styles.stepLineActive]} />
-              <View style={[styles.stepCircle, step >= 2 && styles.stepActive]}>
-                <Text style={[styles.stepNumber, step >= 2 && styles.stepNumberActive]}>2</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Email *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="wholesaler@example.com"
+                  placeholderTextColor="#aaa"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
               </View>
-            </View>
-
-            {step === 1 && (
-              <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Full Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="John Doe"
-                    placeholderTextColor="#aaa"
-                    value={name}
-                    onChangeText={setName}
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Email *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="wholesaler@example.com"
-                    placeholderTextColor="#aaa"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Phone Number *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="+1 234 567 890"
-                    placeholderTextColor="#aaa"
-                    value={phone}
-                    onChangeText={setPhone}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Password * (min. 6 characters)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••"
-                    placeholderTextColor="#aaa"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirm Password *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="••••••"
-                    placeholderTextColor="#aaa"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                  />
-                </View>
-                <TouchableOpacity style={styles.button} onPress={handleSignup}>
-                  <Text style={styles.buttonText}>Next → Business Details</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {step === 2 && (
-              <>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Store Name *</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Your Store Name"
-                    placeholderTextColor="#aaa"
-                    value={storeName}
-                    onChangeText={setStoreName}
-                  />
-                </View>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Business License</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="License number (optional)"
-                    placeholderTextColor="#aaa"
-                    value={businessLicense}
-                    onChangeText={setBusinessLicense}
-                  />
-                </View>
-
-                <View style={styles.buttonRow}>
-                  <TouchableOpacity style={[styles.button, styles.backButton]} onPress={() => setStep(1)}>
-                    <Text style={styles.buttonText}>← Back</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.button, styles.signupButton, loading && styles.buttonDisabled]}
-                    onPress={handleSignup}
-                    disabled={loading}>
-                    {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.link}>Login</Text>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Phone Number *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="+1 234 567 890"
+                  placeholderTextColor="#aaa"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Password * (min. 6 characters)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••"
+                  placeholderTextColor="#aaa"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Confirm Password *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="••••••"
+                  placeholderTextColor="#aaa"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                />
+              </View>
+              <TouchableOpacity style={styles.button} onPress={handleSignup}>
+                <Text style={styles.buttonText}>Next → Business Details</Text>
               </TouchableOpacity>
-            </View>
+            </>
+          )}
+
+          {/* Step 2 – Business Details */}
+          {step === 2 && (
+            <>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Store Name *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Your Store Name"
+                  placeholderTextColor="#aaa"
+                  value={storeName}
+                  onChangeText={setStoreName}
+                />
+              </View>
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>Business License</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="License number (optional)"
+                  placeholderTextColor="#aaa"
+                  value={businessLicense}
+                  onChangeText={setBusinessLicense}
+                />
+              </View>
+
+              <View style={styles.buttonRow}>
+                <TouchableOpacity style={[styles.button, styles.backButton]} onPress={() => setStep(1)}>
+                  <Text style={styles.buttonText}>← Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.button, styles.signupButton, loading && styles.buttonDisabled]}
+                  onPress={handleSignup}
+                  disabled={loading}>
+                  {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create Account</Text>}
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+              <Text style={styles.link}>Login</Text>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: '#f8f9fc',
-  },
   container: {
     flex: 1,
+    backgroundColor: '#f8f9fc',
   },
   scrollContent: {
     flexGrow: 1,
@@ -218,7 +211,7 @@ const styles = StyleSheet.create({
     paddingVertical: 28,
     paddingHorizontal: 40,
     borderRadius: 20,
-    width: screenWidth - 48,        // ← now a number
+    width: '100%',
     alignItems: 'center',
     shadowColor: '#FF6B00',
     shadowOffset: { width: 0, height: 6 },

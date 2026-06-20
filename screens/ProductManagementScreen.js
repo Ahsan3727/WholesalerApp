@@ -1,72 +1,240 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
-import { useWholesaler } from '../context/WholesalerContext';
-import { Colors, Shadows } from '../theme/theme';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import api from '../services/api';
 
-export default function ProductManagementScreen() {
-  const { products, addProduct, updateStock, deleteProduct } = useWholesaler();
-  const [showAdd, setShowAdd] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', stock: '', category: '' });
+export default function ProductManagementScreen({ navigation, route }) {
+  const productFromParams = route.params?.product;
+  const [product, setProduct] = useState(productFromParams || null);
+  const [loading, setLoading] = useState(false);
 
-  const handleAdd = () => {
-    if (!newProduct.name) return;
-    addProduct({ ...newProduct, price: parseFloat(newProduct.price) || 0, stock: parseInt(newProduct.stock) || 0 });
-    setNewProduct({ name: '', price: '', stock: '', category: '' });
-    setShowAdd(false);
+  // Editable fields
+  const [name, setName] = useState(product?.name || '');
+  const [price, setPrice] = useState(String(product?.wholesalerPrice || product?.price || ''));
+  const [stock, setStock] = useState(String(product?.stock || ''));
+  const [category, setCategory] = useState(product?.category || '');
+  const [description, setDescription] = useState(product?.description || '');
+
+  if (!product) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Product Not Found</Text>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ color: '#94a3b8' }}>No product selected</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const handleUpdate = async () => {
+    if (!name.trim() || !price.trim()) {
+      Alert.alert('Required', 'Name and price are required');
+      return;
+    }
+    setLoading(true);
+    try {
+      await api.put(`/products/${product._id}`, {
+        name: name.trim(),
+        price: Number(price),
+        stock: Number(stock) || 0,
+        category: category.trim(),
+        description: description.trim(),
+      });
+      Alert.alert('Success', 'Product updated', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.message || 'Update failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Product',
+      `Are you sure you want to delete "${product.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await api.delete(`/products/${product._id}`);
+              Alert.alert('Deleted', 'Product removed', [
+                { text: 'OK', onPress: () => navigation.goBack() },
+              ]);
+            } catch (err) {
+              Alert.alert('Error', err.response?.data?.message || 'Delete failed');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.addBtn} onPress={() => setShowAdd(!showAdd)}>
-        <Text style={styles.addBtnText}>+ Add Product</Text>
-      </TouchableOpacity>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backArrow}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Edit Product</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-      {showAdd && (
-        <View style={styles.addForm}>
-          <TextInput placeholder="Name" value={newProduct.name} onChangeText={t => setNewProduct({ ...newProduct, name: t })} style={styles.input} />
-          <TextInput placeholder="Price" value={newProduct.price} onChangeText={t => setNewProduct({ ...newProduct, price: t })} style={styles.input} keyboardType="numeric" />
-          <TextInput placeholder="Stock" value={newProduct.stock} onChangeText={t => setNewProduct({ ...newProduct, stock: t })} style={styles.input} keyboardType="numeric" />
-          <TextInput placeholder="Category" value={newProduct.category} onChangeText={t => setNewProduct({ ...newProduct, category: t })} style={styles.input} />
-          <TouchableOpacity style={styles.saveBtn} onPress={handleAdd}>
-            <Text style={styles.saveBtnText}>Save Product</Text>
-          </TouchableOpacity>
+      {/* Form Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Product Details</Text>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Product Name *</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Product name"
+            placeholderTextColor="#94a3b8"
+          />
         </View>
-      )}
 
-      <FlatList
-        data={products}
-        keyExtractor={item => item._id}
-        renderItem={({ item }) => (
-          <View style={styles.productCard}>
-            <Text style={styles.productName}>{item.name}</Text>
-            <Text>?{item.price} | Stock: {item.stock} | Status: {item.status}</Text>
-            <View style={styles.productActions}>
-              <TouchableOpacity onPress={() => {
-                const newStock = prompt('New stock quantity:', item.stock.toString());
-                if (newStock) updateStock(item._id, parseInt(newStock) || 0);
-              }}>
-                <Text style={styles.actionLink}>Update Stock</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteProduct(item._id)}>
-                <Text style={[styles.actionLink, { color: Colors.error }]}>Delete</Text>
-              </TouchableOpacity>
-            </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Category</Text>
+          <TextInput
+            style={styles.input}
+            value={category}
+            onChangeText={setCategory}
+            placeholder="Category"
+            placeholderTextColor="#94a3b8"
+          />
+        </View>
+
+        <View style={styles.row}>
+          <View style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}>
+            <Text style={styles.label}>Price (Rs.) *</Text>
+            <TextInput
+              style={styles.input}
+              value={price}
+              onChangeText={setPrice}
+              placeholder="0"
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+            />
           </View>
-        )}
-      />
-    </View>
+          <View style={[styles.inputGroup, { flex: 1 }]}>
+            <Text style={styles.label}>Stock</Text>
+            <TextInput
+              style={styles.input}
+              value={stock}
+              onChangeText={setStock}
+              placeholder="0"
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Optional description"
+            placeholderTextColor="#94a3b8"
+            multiline
+            numberOfLines={3}
+            textAlignVertical="top"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.updateButton, loading && styles.buttonDisabled]}
+          onPress={handleUpdate}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.updateButtonText}>Update Product</Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          disabled={loading}
+        >
+          <Text style={styles.deleteButtonText}>Delete Product</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
-  container: { flex:1, padding:12, backgroundColor:Colors.background },
-  addBtn: { backgroundColor:Colors.primary, padding:14, borderRadius:8, alignItems:'center', marginBottom:12 },
-  addBtnText: { color:Colors.white, fontWeight:'bold' },
-  addForm: { backgroundColor:Colors.white, padding:12, borderRadius:8, marginBottom:12 },
-  input: { borderWidth:1, borderColor:Colors.lightGray, padding:10, borderRadius:6, marginBottom:8 },
-  saveBtn: { backgroundColor:Colors.accent, padding:12, borderRadius:6, alignItems:'center' },
-  saveBtnText: { color:Colors.white, fontWeight:'bold' },
-  productCard: { backgroundColor:Colors.white, padding:14, borderRadius:8, marginBottom:8, ...Shadows.light },
-  productName: { fontWeight:'bold', fontSize:16 },
-  productActions: { flexDirection:'row', justifyContent:'space-between', marginTop:8 },
-  actionLink: { fontWeight:'bold', color:Colors.primary }
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  content: { paddingBottom: 40 },
+  header: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: 20, paddingTop: 50, paddingBottom: 16,
+    backgroundColor: '#ffffff', borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+    shadowColor: '#0f172a', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04, shadowRadius: 12, elevation: 3,
+  },
+  backButton: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: '#f1f5f9',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  backArrow: { fontSize: 20, color: '#1e293b', fontWeight: '600' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#0f172a', letterSpacing: -0.4 },
+  card: {
+    marginHorizontal: 20, marginTop: 20, backgroundColor: '#ffffff',
+    borderRadius: 20, padding: 24, borderWidth: 1, borderColor: '#eef2f6',
+    shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 12, elevation: 3,
+  },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a', marginBottom: 16 },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '600', color: '#475569', marginBottom: 6 },
+  input: {
+    backgroundColor: '#f8fafc', borderWidth: 1.5, borderColor: '#e2e8f0',
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 15, color: '#0f172a',
+  },
+  textArea: { minHeight: 80, paddingTop: 12 },
+  row: { flexDirection: 'row' },
+  updateButton: {
+    backgroundColor: '#1e40af', paddingVertical: 16, borderRadius: 14,
+    alignItems: 'center', marginTop: 8, shadowColor: '#1e40af',
+    shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2,
+    shadowRadius: 8, elevation: 4,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  updateButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
+  deleteButton: {
+    marginTop: 12, backgroundColor: '#ffffff', borderWidth: 1.5,
+    borderColor: '#fecaca', borderRadius: 14, paddingVertical: 14,
+    alignItems: 'center',
+  },
+  deleteButtonText: { color: '#ef4444', fontWeight: '700', fontSize: 16 },
 });
