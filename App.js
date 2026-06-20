@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import usePushNotifications from './hooks/usePushNotifications';
+import * as Notifications from 'expo-notifications';   // ← added
+import { useNavigation } from '@react-navigation/native'; // ← added
+
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import DashboardScreen from './screens/DashboardScreen';
@@ -13,14 +16,49 @@ import OrdersScreen from './screens/OrdersScreen';
 import EarningsScreen from './screens/EarningsScreen';
 import MapScreen from './screens/MapScreen';
 import { ActivityIndicator, View } from 'react-native';
-import ProductManagementScreen from './screens/ProductManagementScreen'; // adjust the path
+import ProductManagementScreen from './screens/ProductManagementScreen';
 
 const Stack = createNativeStackNavigator();
 
+// ---------- Set how notifications are shown when the app is in foreground ----------
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 const AppNavigator = () => {
   const { isAuthenticated, loading } = useAuth();
+  const navigation = useNavigation();   // ← added
 
+  // Register for push tokens & save to backend
   usePushNotifications(isAuthenticated);
+
+  // ---------- Handle notification tap (app in background) ----------
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const { data } = response.notification.request.content;
+      // Navigate to order detail when a new order notification is tapped
+      if (data?.type === 'new_order' && data?.orderId) {
+        navigation.navigate('Orders', { orderId: data.orderId });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [navigation]);
+
+  // ---------- Handle notification that opened the app from killed state ----------
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+  useEffect(() => {
+    if (lastNotificationResponse) {
+      const { data } = lastNotificationResponse.notification.request.content;
+      if (data?.type === 'new_order' && data?.orderId) {
+        navigation.navigate('Orders', { orderId: data.orderId });
+      }
+    }
+  }, [lastNotificationResponse]);
 
   if (loading) {
     return (
