@@ -33,7 +33,6 @@ const QUICK_ACTIONS = [
 
 const DashboardScreen = ({ navigation }) => {
   const { wholesaler } = useAuth();
-  useLocationTracking(true);
 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({

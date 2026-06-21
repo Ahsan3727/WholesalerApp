@@ -110,6 +110,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 👇 NEW: Allow partial update of wholesaler state (e.g., after saving shop location)
+  const updateWholesaler = (newData) => {
+    setWholesaler((prev) => {
+      const updated = { ...prev, ...newData };
+      // Also persist to AsyncStorage so it survives refresh
+      AsyncStorage.setItem('wholesalerData', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   return (
     <AuthContext.Provider value={{
       wholesaler,
@@ -119,6 +129,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       updateProfile,
+      updateWholesaler,          // ← exposed
     }}>
       {children}
     </AuthContext.Provider>
