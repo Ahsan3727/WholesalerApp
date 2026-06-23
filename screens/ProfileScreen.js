@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,13 +11,25 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 const ProfileScreen = ({ navigation }) => {
-  const { wholesaler, updateProfile, logout } = useAuth();   // ← logout from context
+  const { wholesaler, updateProfile, logout } = useAuth();
+
+  // Local state for form fields
   const [name, setName] = useState(wholesaler?.name || '');
   const [phone, setPhone] = useState(wholesaler?.phone || '');
   const [storeName, setStoreName] = useState(wholesaler?.storeName || '');
   const [businessLicense, setBusinessLicense] = useState(
     wholesaler?.businessLicense || ''
   );
+
+  // Keep local state synced with context when wholesaler changes
+  useEffect(() => {
+    if (wholesaler) {
+      setName(wholesaler.name || '');
+      setPhone(wholesaler.phone || '');
+      setStoreName(wholesaler.storeName || '');
+      setBusinessLicense(wholesaler.businessLicense || '');
+    }
+  }, [wholesaler]);
 
   const handleSave = async () => {
     const result = await updateProfile({
@@ -26,8 +38,12 @@ const ProfileScreen = ({ navigation }) => {
       storeName,
       businessLicense,
     });
+
     if (result.success) {
-      Alert.alert('Success', 'Profile updated');
+      Alert.alert(
+        'Success',
+        `Profile updated.\nStore name saved as: "${storeName}"`
+      );
     } else {
       Alert.alert('Error', result.message);
     }
@@ -42,11 +58,7 @@ const ProfileScreen = ({ navigation }) => {
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: () => {
-            // This sets the user/token to null, and the app's main
-            // navigator will automatically show the LoginScreen.
-            logout();
-          },
+          onPress: () => logout(),
         },
       ]
     );

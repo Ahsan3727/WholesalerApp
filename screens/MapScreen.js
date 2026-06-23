@@ -13,10 +13,10 @@ import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
-const DEFAULT_LOCATION = { latitude: 31.72, longitude: 72.98 }; // fallback only if nothing else
+const DEFAULT_LOCATION = { latitude: 31.72, longitude: 72.98 };
 
 export default function MapScreen({ navigation }) {
-  const { wholesaler, updateWholesaler } = useAuth();   // added updateWholesaler
+  const { wholesaler, updateWholesaler } = useAuth();
   const [markerPosition, setMarkerPosition] = useState(DEFAULT_LOCATION);
   const [loading, setLoading] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -85,7 +85,6 @@ export default function MapScreen({ navigation }) {
                 lng: markerPosition.longitude,
                 address: '',
               });
-              // Update auth context immediately
               updateWholesaler({
                 shopLocation: {
                   type: 'Point',
@@ -226,7 +225,7 @@ function WebMapWithDraggableMarker({ position, onDragEnd, icon, onMapReady }) {
   );
 }
 
-// ---------- Styles (identical to previous) ----------
+// ---------- Styles ----------
 const styles = StyleSheet.create({
   container: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 30, backgroundColor: '#fff' },

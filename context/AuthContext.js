@@ -14,17 +14,25 @@ export const AuthProvider = ({ children }) => {
     loadStoredData();
   }, []);
 
-  const loadStoredData = async () => {
+   const loadStoredData = async () => {
     try {
       const token = await AsyncStorage.getItem('wholesalerToken');
       const wholesalerData = await AsyncStorage.getItem('wholesalerData');
       
       if (token && wholesalerData) {
-        setWholesaler(JSON.parse(wholesalerData));
+        const storedWholesaler = JSON.parse(wholesalerData);
+        setWholesaler(storedWholesaler);
         setIsAuthenticated(true);
         
         try {
           const { data } = await api.get('/auth/me');
+
+          // 👇 If the server didn't return shopLocation, keep the one we have locally
+          if (!data.shopLocation && storedWholesaler.shopLocation) {
+            data.shopLocation = storedWholesaler.shopLocation;
+            data.locationSet = true;
+          }
+
           setWholesaler(data);
           await AsyncStorage.setItem('wholesalerData', JSON.stringify(data));
         } catch (error) {
@@ -110,11 +118,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 👇 NEW: Allow partial update of wholesaler state (e.g., after saving shop location)
+  // 👇 NEW: Partial update of wholesaler state (persists to AsyncStorage)
   const updateWholesaler = (newData) => {
     setWholesaler((prev) => {
       const updated = { ...prev, ...newData };
-      // Also persist to AsyncStorage so it survives refresh
       AsyncStorage.setItem('wholesalerData', JSON.stringify(updated));
       return updated;
     });
@@ -129,7 +136,7 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       updateProfile,
-      updateWholesaler,          // ← exposed
+      updateWholesaler,      // ← exposed
     }}>
       {children}
     </AuthContext.Provider>

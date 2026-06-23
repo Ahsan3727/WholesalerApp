@@ -14,7 +14,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function MapScreen({ navigation }) {
-  const { wholesaler, updateWholesaler } = useAuth();   // added updateWholesaler
+  const { wholesaler, updateWholesaler } = useAuth();
   const [markerPosition, setMarkerPosition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
@@ -161,7 +161,6 @@ export default function MapScreen({ navigation }) {
           description="Long press and drag to set exact location"
           draggable
           onDragEnd={(e) => {
-            // Update the saved position to the dragged coordinates
             setMarkerPosition(e.nativeEvent.coordinate);
           }}
         >
@@ -202,7 +201,7 @@ export default function MapScreen({ navigation }) {
   );
 }
 
-// ---------- Styles (unchanged) ----------
+// ---------- Styles ----------
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },

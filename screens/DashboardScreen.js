@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import useLocationTracking from '../hooks/useLocationTracking';
 import api from '../services/api';
 
 // Color palette for stat cards
@@ -18,6 +17,7 @@ const STAT_STYLES = [
   { card: 'statCardBlue', iconBox: 'iconBoxBlue', icon: '📋' },
   { card: 'statCardAmber', iconBox: 'iconBoxAmber', icon: '💰' },
   { card: 'statCardPurple', iconBox: 'iconBoxPurple', icon: '📈' },
+  { card: 'statCardTeal', iconBox: 'iconBoxTeal', icon: '✅' },
 ];
 
 // Quick Actions
@@ -40,18 +40,17 @@ const DashboardScreen = ({ navigation }) => {
     pendingOrders: 0,
     monthlyRevenue: 0,
     avgOrderValue: 0,
+    receivedAmount: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
 
-  // Fetch all data on mount
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // Fetch products and orders in parallel
       const [productsRes, ordersRes] = await Promise.all([
         api.get('/products/my'),
-        api.get('/orders'),   // or /orders?wholesaler=me if your backend supports it
+        api.get('/orders'),   // expanded group orders for wholesaler
       ]);
 
       // --- Products ---
@@ -59,10 +58,9 @@ const DashboardScreen = ({ navigation }) => {
       const totalProducts = products.length;
 
       // --- Orders ---
-      const allOrders = ordersRes.data.orders || ordersRes.data; // adjust based on response shape
+      const allOrders = ordersRes.data || [];       // already separated groups
       const pendingOrders = allOrders.filter(o => o.status === 'pending').length;
 
-      // Delivered orders for revenue & average
       const deliveredOrders = allOrders.filter(o => o.status === 'delivered');
       const now = new Date();
       const thisMonthOrders = deliveredOrders.filter(o => {
@@ -73,23 +71,30 @@ const DashboardScreen = ({ navigation }) => {
         );
       });
 
+      // Monthly revenue (sum of group subtotals)
       const monthlyRevenue = thisMonthOrders.reduce(
         (sum, o) => sum + (o.payment?.amount || 0),
         0
       );
 
+      // Average order value (based on all delivered groups)
       const avgOrderValue =
         deliveredOrders.length > 0
           ? deliveredOrders.reduce((sum, o) => sum + (o.payment?.amount || 0), 0) /
             deliveredOrders.length
           : 0;
 
+      // Received amount = sum of orders where the group is paid (wholesalerPaid)
+      const receivedAmount = deliveredOrders
+        .filter(o => o.wholesalerPaid)
+        .reduce((sum, o) => sum + (o.payment?.amount || 0), 0);
+
       // Recent delivered orders (last 3)
       const recent = [...deliveredOrders]
         .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
         .slice(0, 3)
         .map(o => ({
-          id: o._id.slice(-6),
+          id: o._id?.slice(-6),
           retailer: o.customer?.name || 'Customer',
           items: o.items?.length || 1,
           total: o.payment?.amount || 0,
@@ -101,6 +106,7 @@ const DashboardScreen = ({ navigation }) => {
         pendingOrders,
         monthlyRevenue,
         avgOrderValue,
+        receivedAmount,
       });
       setRecentOrders(recent);
     } catch (error) {
@@ -139,6 +145,7 @@ const DashboardScreen = ({ navigation }) => {
     { label: 'Pending', value: stats.pendingOrders },
     { label: 'Revenue', value: `Rs. ${stats.monthlyRevenue.toFixed(0)}` },
     { label: 'Avg Order', value: `Rs. ${stats.avgOrderValue.toFixed(0)}` },
+    { label: 'Received', value: `Rs. ${stats.receivedAmount.toFixed(0)}` },
   ];
 
   return (
@@ -186,7 +193,7 @@ const DashboardScreen = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      {/* Stats Grid – with loading indicator inside */}
+      {/* Stats Grid – 5 cards */}
       {loading ? (
         <View style={styles.loadingStats}>
           <ActivityIndicator size="large" color="#1e40af" />
@@ -250,7 +257,7 @@ const DashboardScreen = ({ navigation }) => {
   );
 };
 
-// ---------- Styles (unchanged from your previous fit-screen design) ----------
+// ---------- Styles ----------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -368,6 +375,7 @@ const styles = StyleSheet.create({
   statCardBlue: { borderLeftWidth: 4, borderLeftColor: '#3b82f6' },
   statCardAmber: { borderLeftWidth: 4, borderLeftColor: '#f59e0b' },
   statCardPurple: { borderLeftWidth: 4, borderLeftColor: '#8b5cf6' },
+  statCardTeal: { borderLeftWidth: 4, borderLeftColor: '#14b8a6' },
   iconBoxBase: {
     width: 36,
     height: 36,
@@ -380,6 +388,7 @@ const styles = StyleSheet.create({
   iconBoxBlue: { backgroundColor: '#dbeafe' },
   iconBoxAmber: { backgroundColor: '#fef3c7' },
   iconBoxPurple: { backgroundColor: '#ede9fe' },
+  iconBoxTeal: { backgroundColor: '#ccfbf1' },
   iconText: { fontSize: 18 },
   statTextGroup: { flex: 1 },
   statValue: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
