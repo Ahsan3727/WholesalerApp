@@ -1,0 +1,15 @@
+{
+  "cli": {
+    "version": ">= 19.0.8"
+  },
+  "build": {
+    "production": {
+      "android": {
+        "buildType": "apk",
+        "env": {
+          "EAS_BUILD_NPM_INSTALL": "true"
+        }
+      }
+    }
+  }
+}

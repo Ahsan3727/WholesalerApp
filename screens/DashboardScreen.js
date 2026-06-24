@@ -217,6 +217,14 @@ const DashboardScreen = ({ navigation }) => {
         </View>
       )}
 
+      {/* ───────── NEW: View Earnings button ───────── */}
+      <TouchableOpacity
+        style={styles.earningsButton}
+        onPress={() => navigation.navigate('Earnings')}
+      >
+        <Text style={styles.earningsButtonText}>💰 View Full Earnings</Text>
+      </TouchableOpacity>
+
       {/* Recent Orders */}
       <View style={styles.ordersHeader}>
         <Text style={styles.sectionTitle}>Recent Orders</Text>
@@ -257,7 +265,7 @@ const DashboardScreen = ({ navigation }) => {
   );
 };
 
-// ---------- Styles ----------
+// ---------- Styles (with new earningsButton) ----------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -393,6 +401,19 @@ const styles = StyleSheet.create({
   statTextGroup: { flex: 1 },
   statValue: { fontSize: 20, fontWeight: '700', color: '#0f172a' },
   statLabel: { fontSize: 11, color: '#64748b', fontWeight: '600' },
+  // ─── New Earnings Button ───
+  earningsButton: {
+    backgroundColor: '#1e40af',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  earningsButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
   ordersHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

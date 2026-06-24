@@ -17,6 +17,8 @@ import EarningsScreen from './screens/EarningsScreen';
 import MapScreen from './screens/MapScreen';
 import { ActivityIndicator, View } from 'react-native';
 import ProductManagementScreen from './screens/ProductManagementScreen';
+import OrderDetailScreen from './screens/OrderDetailScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -80,6 +82,7 @@ const AppNavigator = () => {
           <Stack.Screen name="Earnings" component={EarningsScreen} />
           <Stack.Screen name="Map" component={MapScreen} />
           <Stack.Screen name="ProductManagement" component={ProductManagementScreen} />
+          <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
         </>
       ) : (
         <>

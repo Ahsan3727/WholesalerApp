@@ -1,80 +1,88 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
+  TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';   // keep if you'll use real API later
+import api from '../services/api';
 
 const EarningsScreen = ({ navigation }) => {
   const { wholesaler } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [earnings, setEarnings] = useState({
     today: 0,
     week: 0,
     month: 0,
-    totalWithdrawn: 0,
+    received: 0,
   });
-  const [loading, setLoading] = useState(true);
 
-  // Simulate fetching earnings – replace with actual API call when ready
-  useEffect(() => {
-    const fetchEarnings = async () => {
-      try {
-        // Example: const { data } = await api.get('/earnings');
-        // setEarnings(data);
-        // For now, mock data after a short delay
-        setTimeout(() => {
-          setEarnings({
-            today: 3500,
-            week: 24500,
-            month: 98000,
-            totalWithdrawn: 50000,
-          });
-          setLoading(false);
-        }, 800);
-      } catch (error) {
-        console.log(error);
-        setLoading(false);
+  const fetchEarnings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get('/orders'); // returns expanded groups for this wholesaler
+      const orders = data || [];
+
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      let todaySum = 0;
+      let weekSum = 0;
+      let monthSum = 0;
+      let receivedSum = 0;
+
+      for (const order of orders) {
+        const orderDate = new Date(order.createdAt || order.date);
+        const amount = order.payment?.amount || 0;
+
+        if (orderDate >= startOfToday) {
+          todaySum += amount;
+        }
+        if (orderDate >= startOfWeek) {
+          weekSum += amount;
+        }
+        if (orderDate >= startOfMonth) {
+          monthSum += amount;
+        }
+
+        // Received = orders where the group is marked paid (wholesalerPaid)
+        if (order.wholesalerPaid) {
+          receivedSum += amount;
+        }
       }
-    };
-    fetchEarnings();
+
+      setEarnings({
+        today: todaySum,
+        week: weekSum,
+        month: monthSum,
+        received: receivedSum,
+      });
+    } catch (error) {
+      console.error('Error fetching earnings:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleWithdrawal = () => {
-    Alert.alert(
-      'Withdrawal Request',
-      `Are you sure you want to request a withdrawal of Rs. ${earnings.month.toLocaleString()}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: () => {
-            // Call withdrawal API here if available
-            Alert.alert('Success', 'Withdrawal request submitted');
-            // Optionally update the available balance
-          },
-        },
-      ]
-    );
-  };
+  useEffect(() => {
+    fetchEarnings();
+  }, [fetchEarnings]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Earnings</Text>
-        <View style={styles.placeholder} />
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
@@ -84,34 +92,33 @@ const EarningsScreen = ({ navigation }) => {
       ) : (
         <>
           {/* Summary Cards */}
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Today</Text>
-              <Text style={styles.summaryAmount}>Rs. {earnings.today.toLocaleString()}</Text>
+          <View style={styles.cardRow}>
+            <View style={[styles.card, { borderLeftColor: '#22c55e' }]}>
+              <Text style={styles.cardLabel}>Today</Text>
+              <Text style={styles.cardAmount}>Rs. {earnings.today.toFixed(0)}</Text>
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>This Week</Text>
-              <Text style={styles.summaryAmount}>Rs. {earnings.week.toLocaleString()}</Text>
+            <View style={[styles.card, { borderLeftColor: '#3b82f6' }]}>
+              <Text style={styles.cardLabel}>This Week</Text>
+              <Text style={styles.cardAmount}>Rs. {earnings.week.toFixed(0)}</Text>
             </View>
           </View>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>This Month</Text>
-              <Text style={styles.summaryAmount}>Rs. {earnings.month.toLocaleString()}</Text>
+          <View style={styles.cardRow}>
+            <View style={[styles.card, { borderLeftColor: '#f59e0b' }]}>
+              <Text style={styles.cardLabel}>This Month</Text>
+              <Text style={styles.cardAmount}>Rs. {earnings.month.toFixed(0)}</Text>
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Withdrawn</Text>
-              <Text style={styles.summaryAmount}>Rs. {earnings.totalWithdrawn.toLocaleString()}</Text>
+            <View style={[styles.card, { borderLeftColor: '#14b8a6' }]}>
+              <Text style={styles.cardLabel}>Received</Text>
+              <Text style={styles.cardAmount}>Rs. {earnings.received.toFixed(0)}</Text>
             </View>
           </View>
 
-          {/* Withdrawal Button */}
+          {/* Request Withdrawal Button (placeholder) */}
           <TouchableOpacity
             style={styles.withdrawButton}
-            onPress={handleWithdrawal}
-            activeOpacity={0.8}
+            onPress={() => alert('Withdrawal request will be available soon.')}
           >
-            <Text style={styles.withdrawText}>Request Withdrawal</Text>
+            <Text style={styles.withdrawButtonText}>Request Withdrawal</Text>
           </TouchableOpacity>
         </>
       )}
@@ -120,14 +127,9 @@ const EarningsScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f7fa',
-  },
-  contentContainer: {
-    paddingBottom: 40,
-  },
-  // Header
+  container: { flex: 1, backgroundColor: '#f5f7fa' },
+  content: { paddingBottom: 40 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 80 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -152,39 +154,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  backArrow: {
-    fontSize: 20,
-    color: '#1e293b',
-    fontWeight: '600',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0f172a',
-    letterSpacing: -0.4,
-  },
-  placeholder: {
-    width: 40,
-  },
-  // Loading
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 80,
-  },
-  // Summary Cards
-  summaryRow: {
+  backArrow: { fontSize: 20, color: '#1e293b', fontWeight: '600' },
+  headerTitle: { fontSize: 20, fontWeight: '700', color: '#0f172a', letterSpacing: -0.4 },
+  cardRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginTop: 20,
+    marginHorizontal: 20,
+    marginTop: 24,
+    gap: 12,
   },
-  summaryCard: {
-    width: '48%',
+  card: {
+    flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: 16,
+    padding: 18,
+    borderLeftWidth: 4,
     borderWidth: 1,
     borderColor: '#eef2f6',
     shadowColor: '#0f172a',
@@ -193,36 +176,22 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  summaryLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#64748b',
-    marginBottom: 8,
-  },
-  summaryAmount: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  // Withdraw Button
+  cardLabel: { fontSize: 13, fontWeight: '600', color: '#64748b', marginBottom: 8 },
+  cardAmount: { fontSize: 22, fontWeight: '700', color: '#0f172a' },
   withdrawButton: {
     backgroundColor: '#1e40af',
     marginHorizontal: 20,
-    marginTop: 30,
-    paddingVertical: 18,
-    borderRadius: 16,
+    marginTop: 32,
+    paddingVertical: 16,
+    borderRadius: 14,
     alignItems: 'center',
     shadowColor: '#1e40af',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 4,
   },
-  withdrawText: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  withdrawButtonText: { color: '#ffffff', fontWeight: '700', fontSize: 16 },
 });
 
 export default EarningsScreen;

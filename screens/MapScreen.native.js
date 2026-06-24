@@ -8,10 +8,73 @@ import {
   Alert,
   Linking,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+
+// Leaflet map HTML with draggable marker
+const mapHTML = (lat, lng) => `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+    <style>
+      body { margin:0; padding:0; }
+      #map { width:100vw; height:100vh; }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+      const map = L.map('map', { zoomControl: true }).setView([${lat}, ${lng}], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(map);
+
+      const marker = L.marker([${lat}, ${lng}], { draggable: true }).addTo(map);
+
+      marker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'markerDrag',
+          lat: pos.lat,
+          lng: pos.lng
+        }));
+      });
+
+      map.on('click', function(e) {
+        marker.setLatLng(e.latlng);
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'markerDrag',
+          lat: e.latlng.lat,
+          lng: e.latlng.lng
+        }));
+      });
+
+      // Function to update location from React Native
+      window.updateLocation = function(lat, lng) {
+        marker.setLatLng([lat, lng]);
+        map.setView([lat, lng], 15);
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'markerDrag',
+          lat: lat,
+          lng: lng
+        }));
+      };
+
+      // Send initial position
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: 'markerDrag',
+        lat: marker.getLatLng().lat,
+        lng: marker.getLatLng().lng
+      }));
+    </script>
+  </body>
+  </html>
+`;
 
 export default function MapScreen({ navigation }) {
   const { wholesaler, updateWholesaler } = useAuth();
@@ -19,7 +82,7 @@ export default function MapScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [saving, setSaving] = useState(false);
-  const mapRef = useRef(null);
+  const webViewRef = useRef(null);
 
   // Determine initial position: saved shop location > device location
   useEffect(() => {
@@ -32,7 +95,6 @@ export default function MapScreen({ navigation }) {
         savedLoc.coordinates.length === 2 &&
         (savedLoc.coordinates[0] !== 0 || savedLoc.coordinates[1] !== 0)
       ) {
-        // GeoJSON stores [lng, lat]
         const [lng, lat] = savedLoc.coordinates;
         setMarkerPosition({ latitude: lat, longitude: lng });
         setLoading(false);
@@ -61,20 +123,24 @@ export default function MapScreen({ navigation }) {
   }, []);
 
   const centerOnUser = () => {
-    if (mapRef.current && markerPosition) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: markerPosition.latitude,
-          longitude: markerPosition.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        1000
-      );
+    if (webViewRef.current && markerPosition) {
+      webViewRef.current.injectJavaScript(`
+        window.updateLocation(${markerPosition.latitude}, ${markerPosition.longitude});
+      `);
     }
   };
 
-  // Save the MARKER POSITION (after possible dragging)
+  const handleWebViewMessage = (event) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'markerDrag') {
+        setMarkerPosition({ latitude: data.lat, longitude: data.lng });
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   const handleSaveLocation = async () => {
     if (!markerPosition) return;
     Alert.alert(
@@ -92,7 +158,6 @@ export default function MapScreen({ navigation }) {
                 lng: markerPosition.longitude,
                 address: '',
               });
-              // Update auth context immediately so next open shows saved location
               updateWholesaler({
                 shopLocation: {
                   type: 'Point',
@@ -143,32 +208,15 @@ export default function MapScreen({ navigation }) {
   // ---------- Main view ----------
   return (
     <View style={styles.container}>
-      <MapView
-        ref={mapRef}
+      <WebView
+        ref={webViewRef}
+        source={{ html: mapHTML(markerPosition.latitude, markerPosition.longitude) }}
         style={styles.map}
-        initialRegion={{
-          latitude: markerPosition.latitude,
-          longitude: markerPosition.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        showsUserLocation={false}
-        toolbarEnabled={false}
-      >
-        <Marker
-          coordinate={markerPosition}
-          title="Drag me to your shop"
-          description="Long press and drag to set exact location"
-          draggable
-          onDragEnd={(e) => {
-            setMarkerPosition(e.nativeEvent.coordinate);
-          }}
-        >
-          <View style={styles.markerBox}>
-            <Text style={styles.markerIcon}>🏪</Text>
-          </View>
-        </Marker>
-      </MapView>
+        onMessage={handleWebViewMessage}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        startInLoadingState={false}
+      />
 
       {/* Center button */}
       <TouchableOpacity style={styles.centerBtn} onPress={centerOnUser}>
@@ -219,8 +267,6 @@ const styles = StyleSheet.create({
   },
   backBtn: { fontSize: 16, color: '#4CAF50', fontWeight: '600' },
   title: { fontSize: 18, fontWeight: 'bold', color: '#333' },
-  markerBox: { alignItems: 'center', justifyContent: 'center', width: 40, height: 40 },
-  markerIcon: { fontSize: 28 },
   centerBtn: {
     position: 'absolute', bottom: 30, right: 20,
     backgroundColor: 'white', borderRadius: 30, width: 50, height: 50,
