@@ -8,6 +8,7 @@ import {
   ScrollView,
   TextInput,
   ActivityIndicator,
+  Image,                 // ✅ added for thumbnails
 } from 'react-native';
 import api from '../services/api';
 
@@ -128,32 +129,50 @@ const MyProductsScreen = ({ navigation }) => {
         activeOpacity={0.7}
         onPress={() => navigation.navigate('ProductManagement', { product: item })}
       >
-        <View style={styles.cardTop}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.productName} numberOfLines={1}>
-              {item.name}
-            </Text>
-            <Text style={styles.category}>{item.category || 'Uncategorised'}</Text>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
-            <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {item.status}
-            </Text>
-          </View>
+        {/* ── Thumbnail ── */}
+        <View style={styles.thumbnailBox}>
+          {item.image ? (
+            <Image
+              source={{ uri: item.image }}
+              style={styles.thumbnail}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={styles.placeholderThumb}>
+              <Text style={styles.placeholderIcon}>📷</Text>
+            </View>
+          )}
         </View>
 
-        <View style={styles.cardBottom}>
-          <View style={styles.priceBlock}>
-            <Text style={styles.priceLabel}>Price</Text>
-            <Text style={styles.priceValue}>Rs. {item.wholesalerPrice || item.price}</Text>
-          </View>
-          <View style={styles.stockBlock}>
-            <Text style={styles.stockLabel}>Stock</Text>
-            <View style={[styles.stockBadge, { backgroundColor: stockColor + '18' }]}>
-              <Text style={[styles.stockText, { color: stockColor }]}>
-                {item.stock || 0} {item.unit || 'units'}
+        {/* ── Details ── */}
+        <View style={styles.cardContent}>
+          <View style={styles.cardTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.productName} numberOfLines={1}>
+                {item.name}
               </Text>
+              <Text style={styles.category}>{item.category || 'Uncategorised'}</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor + '18' }]}>
+              <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+              <Text style={[styles.statusText, { color: statusColor }]}>
+                {item.status}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.cardBottom}>
+            <View style={styles.priceBlock}>
+              <Text style={styles.priceLabel}>Price</Text>
+              <Text style={styles.priceValue}>Rs. {item.wholesalerPrice || item.price}</Text>
+            </View>
+            <View style={styles.stockBlock}>
+              <Text style={styles.stockLabel}>Stock</Text>
+              <View style={[styles.stockBadge, { backgroundColor: stockColor + '18' }]}>
+                <Text style={[styles.stockText, { color: stockColor }]}>
+                  {item.stock || 0} {item.unit || 'units'}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
@@ -316,11 +335,48 @@ const styles = StyleSheet.create({
   sortTextActive: { color: '#4f46e5' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', marginTop: 80 },
   listContent: { paddingHorizontal: 20, paddingBottom: 30 },
+  // ── Card with thumbnail ──
   card: {
-    backgroundColor: '#ffffff', borderRadius: 16, padding: 16, marginBottom: 10,
-    borderWidth: 1, borderColor: '#eef2f6', shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04,
-    shadowRadius: 8, elevation: 2,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#eef2f6',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  thumbnailBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginRight: 12,
+    backgroundColor: '#f1f5f9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderThumb: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  placeholderIcon: {
+    fontSize: 24,
+    opacity: 0.5,
+  },
+  cardContent: {
+    flex: 1,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   productName: { fontSize: 16, fontWeight: '700', color: '#0f172a', flex: 1, marginRight: 10 },

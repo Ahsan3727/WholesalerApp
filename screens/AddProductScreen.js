@@ -17,7 +17,8 @@ const AddProductScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
-  const [price, setPrice] = useState('');
+  const [price, setPrice] = useState('');               // wholesale price
+  const [retailPrice, setRetailPrice] = useState('');    // NEW: retail price
   const [stock, setStock] = useState('');
   const [unit, setUnit] = useState('piece');
   const [weight, setWeight] = useState('');
@@ -53,8 +54,9 @@ const AddProductScreen = ({ navigation }) => {
       await api.post('/products', {
         name: name.trim(),
         description: description.trim(),
-        category,                         // selected global category name
+        category,
         price: Number(price),
+        retailPrice: Number(retailPrice) || 0,     // send retail price (0 if empty)
         stock: Number(stock) || 0,
         unit,
         weight: weight ? Number(weight) : undefined,
@@ -115,7 +117,7 @@ const AddProductScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Category – only global categories */}
+        {/* Category */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Category *</Text>
           {categoriesLoading ? (
@@ -179,30 +181,43 @@ const AddProductScreen = ({ navigation }) => {
           </ScrollView>
         </View>
 
-        {/* Price & Stock */}
-        <View style={styles.rowInputs}>
-          <View style={styles.halfInputGroup}>
-            <Text style={styles.label}>Price (Rs.) *</Text>
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              placeholder="80"
-              placeholderTextColor="#94a3b8"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.halfInputGroup}>
-            <Text style={styles.label}>Stock</Text>
-            <TextInput
-              style={styles.input}
-              value={stock}
-              onChangeText={setStock}
-              placeholder="100"
-              placeholderTextColor="#94a3b8"
-              keyboardType="numeric"
-            />
-          </View>
+        {/* Wholesale Price */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Wholesale Price (Rs.) *</Text>
+          <TextInput
+            style={styles.input}
+            value={price}
+            onChangeText={setPrice}
+            placeholder="80"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+          />
+        </View>
+
+        {/* Retail Price (NEW) */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Retail Price (Rs.)</Text>
+          <TextInput
+            style={styles.input}
+            value={retailPrice}
+            onChangeText={setRetailPrice}
+            placeholder="100"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+          />
+        </View>
+
+        {/* Stock */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Stock</Text>
+          <TextInput
+            style={styles.input}
+            value={stock}
+            onChangeText={setStock}
+            placeholder="100"
+            placeholderTextColor="#94a3b8"
+            keyboardType="numeric"
+          />
         </View>
 
         {/* Weight (optional) */}
@@ -354,14 +369,6 @@ const styles = StyleSheet.create({
   },
   categoryChipTextSelected: {
     color: '#ffffff',
-  },
-  rowInputs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-  },
-  halfInputGroup: {
-    width: '48%',
   },
   submitButton: {
     backgroundColor: '#1e40af',
